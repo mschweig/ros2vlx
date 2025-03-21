@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ros2vlx"
+version = "0.1.0"
+description = "A modular and extensible framework for interacting with ROS2 using natural language queries."
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+readme = "README.md"
+license = { file = "LICENSE" }  # Use a LICENSE file instead of deprecated license table
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+    "langchain>=0.0.200",  # LangChain for LLM orchestration
+    "pyyaml>=6.0",         # For loading YAML configuration files
+    "transformers>=4.26.0", # For VLMs like BLIP
+    "opencv-python>=4.7.0", # For image processing
+    "rclpy>=3.0.0",        # ROS2 Python client library
+    "cv_bridge>=3.0.0",    # For converting ROS2 images to OpenCV format
+    "pytest>=7.0.0",       # For running tests
+]
+
+[project.scripts]
+ros2vlx = "ros2vlx.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["ros2vlx"]  # Explicitly specify the package directory
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-v"
+testpaths = ["tests"]
