@@ -23,18 +23,33 @@ ROS2VLX is a natural language interface for ROS2, enabling users to interact wit
    cd ros2vlx
    ```
 
-2. Create and activate a virtual environment using [uv](https://docs.astral.sh/uv/)
+2. Ensure ROS2 is properly installed and sourced on your machine. Follow the official [ROS2 installation guide](https://docs.ros.org/en/rolling/Installation.html) for your platform. After installation, source the ROS2 setup script:
+   ```bash
+   source /opt/ros/<ros2-distro>/setup.bash
+   ```
+   Replace `<ros2-distro>` with your installed ROS2 distribution (e.g., `humble`, `rolling`).
+
+3. Set up Azure OpenAI API information:
+   - Create a `.env` file in the project root directory.
+   - Add the following environment variables to the `.env` file:
+     ```env
+     AZURE_OPENAI_API_KEY=<your-api-key>
+     AZURE_OPENAI_ENDPOINT=<your-endpoint>
+     ```
+   Replace `<your-api-key>` and `<your-endpoint>` with your Azure OpenAI API credentials.
+
+4. Create and activate a virtual environment using [uv](https://docs.astral.sh/uv/):
    ```bash
    uv venv .ros2vlx-venv --python 3.12
    source .ros2vlx-venv/bin/activate
    ```
 
-3. Install dependencies
+5. Install dependencies:
    ```bash
    uv pip install -e .
    ```
 
-4. Use with cli.py:
+6. Use with `cli.py`:
    ```bash
    python3 scripts/cli.py "Echo the chatter topic"
    ```
