@@ -1,15 +1,26 @@
-# ROS2VLX
+# ROS2VLX - ROS2 Voice Language eXecutor
 
-ROS2VLX is a modular and extensible framework for interacting with ROS2 using natural language queries. It integrates ROS2, LLMs (Language Models), and VLMs (Vision-Language Models) to provide a user-friendly interface for robotics applications.
+ROS2VLX is a natural language interface for ROS2, enabling users to interact with ROS2 using voice or text commands. It leverages LangChain, NVIDIA AI endpoints, and OpenAI/Azure OpenAI to provide a seamless and intelligent experience.
 
 ## Features
-- **Natural Language Interface**: Interact with ROS2 using plain English.
-- **Modular Plugins**: Easily extend functionality with plugins.
-- **Vision-Language Integration**: Use VLMs to analyze images from ROS2 topics.
-- **Production-Ready**: Robust error handling, logging, and testing.
+- List ROS2 topics
+- Launch TurtleBot3 simulation
+- Record ROS2 bag files
+- Extensible and modular design
 
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/ros2vlx.git
+   git clone https://github.com/mschweig/ros2vlx.git
    cd ros2vlx
+
+2. Create and activate a virtual environment with uv
+   ```bash
+   python -m venv .ros2vlx-venv
+   source .ros2vlx-venv/bin/activate
+   ```
+
+3. Install dependencies
+   ```bash
+   pip install -e .
+   ```

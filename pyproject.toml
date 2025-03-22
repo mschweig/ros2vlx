@@ -1,42 +1,47 @@
 [build-system]
-requires = ["setuptools>=61.0.0", "wheel"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ros2vlx"
 version = "0.1.0"
-description = "A modular and extensible framework for interacting with ROS2 using natural language queries."
+description = "ROS2 VLX - A natural language interface for ROS2."
 authors = [
-    { name = "Your Name", email = "your.email@example.com" }
+    { name = "Manuel Schweiger", email = "schweigermanuel@icloud.com" }
 ]
+license = { text = "MIT" }
 readme = "README.md"
-license = { file = "LICENSE" }  # Use a LICENSE file instead of deprecated license table
 requires-python = ">=3.8"
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-]
 dependencies = [
-    "langchain>=0.0.200",  # LangChain for LLM orchestration
-    "pyyaml>=6.0",         # For loading YAML configuration files
-    "transformers>=4.26.0", # For VLMs like BLIP
-    "opencv-python>=4.7.0", # For image processing
-    "rclpy>=3.0.0",        # ROS2 Python client library
-    "cv_bridge>=3.0.0",    # For converting ROS2 images to OpenCV format
-    "pytest>=7.0.0",       # For running tests
+    "langchain-community>=0.3.1",
+    "langchain-core>=0.3.9",
+    "langchain-openai>=0.2.2",
+    "langchain-ollama>=0.2.0",
+    "python-dotenv>=0.21.0",
+    "pyyaml>=6.0",
+    "setuptools>=42",
+    "wheel>=0.37.0"
 ]
 
-[project.scripts]
-ros2vlx = "ros2vlx.cli:main"
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=3.0",
+    "black>=22.0",
+    "flake8>=5.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/ros2vlx"
+Repository = "https://github.com/yourusername/ros2vlx"
+Issues = "https://github.com/yourusername/ros2vlx/issues"
 
 [tool.setuptools.packages.find]
-where = ["ros2vlx"]  # Explicitly specify the package directory
+where = ["."]
+include = ["ros2vlx*"]
+exclude = ["tests*"]
 
 [tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-v"
+minversion = "6.0"
+addopts = "-v --cov=ros2vlx --cov-report=html"
 testpaths = ["tests"]
