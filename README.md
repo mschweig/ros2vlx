@@ -14,13 +14,13 @@ ROS2VLX is a natural language interface for ROS2, enabling users to interact wit
    git clone https://github.com/mschweig/ros2vlx.git
    cd ros2vlx
 
-2. Create and activate a virtual environment with uv
+2. Create and activate a virtual environment using [uv](https://docs.astral.sh/uv/)
    ```bash
-   python -m venv .ros2vlx-venv
+   uv venv .ros2vlx-venv --python 3.12
    source .ros2vlx-venv/bin/activate
    ```
 
 3. Install dependencies
    ```bash
-   pip install -e .
+   uv pip install -e .
    ```
