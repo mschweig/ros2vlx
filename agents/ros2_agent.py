@@ -1,6 +1,6 @@
 from langchain.agents import initialize_agent, Tool
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
-from tools.ros2_tools import list_topics, launch_turtlebot3_simulation, record_bag
+from tools.ros2_tools import list_topics, launch_turtlebot3_simulation, record_bag, echo_topic
 from config.settings import settings
 
 # Initialize the LLM
@@ -26,6 +26,11 @@ tools = [
         name="record_bag",
         func=record_bag,
         description="Useful for recording a ROS2 bag for a specified topic."
+    ),
+    Tool(
+        name="echo_topic",
+        func=echo_topic,
+        description="Useful for subscribing to a ROS2 topic and displaying its messages in real-time."
     )
 ]
 

@@ -32,9 +32,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/ros2vlx"
-Repository = "https://github.com/yourusername/ros2vlx"
-Issues = "https://github.com/yourusername/ros2vlx/issues"
+Homepage = "https://github.com/mschweig"
+Repository = "https://github.com/mschweig/ros2vlx"
+Issues = "https://github.com/mschweig/ros2vlx/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
