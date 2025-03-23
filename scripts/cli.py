@@ -1,5 +1,5 @@
 import argparse
-from agents.ros2_agent import agent
+from agents.ros2_agent import agent_executor
 from utils.logger import logger
 
 def main():
@@ -8,7 +8,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        response = agent.run(args.command)
+        response = agent_executor.invoke({"input": args.command})
         print(response)
     except Exception as e:
         logger.error(f"Error processing command: {e}")

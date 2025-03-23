@@ -33,8 +33,11 @@ ROS2VLX is a natural language interface for ROS2, enabling users to interact wit
    - Create a `.env` file in the project root directory.
    - Add the following environment variables to the `.env` file:
      ```env
-     AZURE_OPENAI_API_KEY=<your-api-key>
-     AZURE_OPENAI_ENDPOINT=<your-endpoint>
+      AZURE_OPENAI_API_KEY=<your-api-key>
+      AZURE_OPENAI_ENDPOINT=<your-endpoint>
+      AZURE_OPENAI_API_VERSION="2023-06-01-preview"
+      AZURE_OPENAI_TEMPERATURE=0
+      AZURE_DEPLOYMENT_MODEL_NAME="gpt-4o"
      ```
    Replace `<your-api-key>` and `<your-endpoint>` with your Azure OpenAI API credentials.
 

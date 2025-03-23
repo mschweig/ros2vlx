@@ -1,4 +1,5 @@
-from langchain.agents import initialize_agent, Tool
+from langchain.agents import AgentExecutor, ZeroShotAgent
+from langchain.agents import Tool
 from tools.ros2_tools import list_topics, launch_turtlebot3_simulation, record_bag, echo_topic
 from utils.chat_model_factory import ChatModelFactory
 from config.settings import settings
@@ -30,5 +31,8 @@ tools = [
     )
 ]
 
-# Initialize the agent
-agent = initialize_agent(tools, llm, agent="zero-shot-react-description", verbose=True)
+# Create the ZeroShotAgent
+agent = ZeroShotAgent.from_llm_and_tools(llm=llm, tools=tools)
+
+# Wrap the agent in an AgentExecutor
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
