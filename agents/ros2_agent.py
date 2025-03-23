@@ -1,14 +1,10 @@
 from langchain.agents import initialize_agent, Tool
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from tools.ros2_tools import list_topics, launch_turtlebot3_simulation, record_bag, echo_topic
+from utils.chat_model_factory import ChatModelFactory
 from config.settings import settings
 
-# Initialize the LLM
-llm = AzureChatOpenAI(
-    azure_deployment="gpt-4o",
-    api_version="2023-06-01-preview", 	
-    temperature=0
-)
+# Initialize the LLM using the factory
+llm = ChatModelFactory.get_chat_model(settings.CHAT_MODEL)
 
 # Define the tools
 tools = [
