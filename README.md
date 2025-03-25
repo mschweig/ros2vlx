@@ -56,3 +56,11 @@ ROS2VLX is a natural language interface for ROS2, enabling users to interact wit
    ```bash
    python3 scripts/cli.py "Echo the chatter topic"
    ```
+
+## Development Checklist
+- ✅ **Azure OpenAI integration**
+- ⬜ **NVIDIA NIM integration**
+- ⬜ **Local Ollama integration**
+- ⬜ **Open WebUI integration**
+- ⬜ **Jetson container integration**
+- ⬜ **Vision-Language Model (VLM) integration**
