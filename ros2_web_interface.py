@@ -1,95 +1,117 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String  # Change to your message type
-from fastapi import FastAPI
-import uvicorn
 import threading
-from typing import Optional
+import asyncio
+from fastapi import FastAPI, HTTPException, Query
+import uvicorn
+import traceback
+from rosidl_runtime_py.utilities import get_message
+from rosidl_runtime_py.convert import message_to_ordereddict
+
+app = FastAPI()
 
 
-class ROSFastAPI(Node):
-    """
-    A ROS2 node that combines a message subscriber with a FastAPI server.
-    """
-
+class OneShotDynamicSubscriber(Node):
     def __init__(self):
-        super().__init__("ros_fastapi_node")
+        super().__init__('one_shot_dynamic_subscriber')
+        self.lock = threading.Lock()
+        self.latest_msg = None
+        self.subscription_event = threading.Event()
 
-        # ROS2 Subscriber
-        self.subscription = self.create_subscription(
-            String,
-            "chatter",
-            self.listener_callback,
-            10,
-        )
+    def get_topic_type(self, topic_name: str) -> str:
+        topic_list = self.get_topic_names_and_types()
+        for name, types in topic_list:
+            if name == topic_name:
+                if not types:
+                    raise ValueError(f"Topic '{topic_name}' has no types.")
+                return types[0]  # Use the first type
+        raise ValueError(f"Topic '{topic_name}' not found.")
 
-        # Store the latest message
-        self.latest_message: Optional[str] = None
+    def import_message_class(self, type_str: str):
+        module_name, _, msg_name = type_str.split('/')
+        return get_message(f"{module_name}/msg/{msg_name}")
 
-        # FastAPI setup
-        self.app = FastAPI(title="ROS2 FastAPI Integration")
-        self.setup_routes()
+    def one_shot_subscribe(self, topic_name: str, timeout: float = 5.0):
+        with self.lock:
+            self.latest_msg = None
+            self.subscription_event.clear()
 
-        self.create_timer(1.0, self.get_topics)
+            # Detect type
+            topic_type = self.get_topic_type(topic_name)
+            self.get_logger().info(f"Detected topic type: {topic_type}")
 
-        self.get_logger().info("ROS2 FastAPI node initialized")
+            # Load message type
+            msg_class = self.import_message_class(topic_type)
 
-    def get_topics(self):
-        self.topics = self.get_topic_names_and_types()
-        self.get_logger().info("Retrieving topics...")
-        self.destroy_node()  # Optional: auto-shutdown after listing
+            # Subscribe
+            subscription = self.create_subscription(
+                msg_class,
+                topic_name,
+                self.callback,
+                qos_profile=10
+            )
 
-    def listener_callback(self, msg):
-        """ROS2 subscriber callback"""
-        self.latest_message = msg.data
+            # Wait for message
+            received = self.subscription_event.wait(timeout=timeout)
+            self.destroy_subscription(subscription)
 
-    def setup_routes(self):
-        """Configure FastAPI routes"""
+            if not received:
+                raise TimeoutError(f"Timeout waiting for message on {topic_name}")
 
-        @self.app.get("/")
-        async def root():
-            return {"message": "ROS2 FastAPI Server Running"}
+            return self.latest_msg
 
-        @self.app.get("/list_topics")
-        async def list_topics():
-            self.get_logger().info("Received command to list topics")
-            return {
-                "latest_topics": self.topics,
-                "status": ("success" if self.topics else "no topics"),
-            }
-
-        @self.app.get("/get_data")
-        async def execute(topic: str):
-            self.get_logger().info(f"Received command for topic: {topic}")
-            return {
-                "latest_message": self.latest_message,
-                "status": ("success" if self.latest_message else "no messages"),
-            }
+    def callback(self, msg):
+        self.get_logger().info("Received a message.")
+        if self.latest_msg is None:
+            self.latest_msg = msg
+            self.subscription_event.set()
 
 
-def run_fastapi(app: FastAPI):
-    """Run FastAPI server in a separate thread"""
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+node: OneShotDynamicSubscriber = None
+
+@app.get("/get_data")
+def get_data(topic: str = Query(..., description="Topic to subscribe to"),
+             timeout: float = Query(5.0, description="Timeout in seconds (default=5)")):
+    if not topic.startswith("/"):
+        raise HTTPException(status_code=400, detail="Topic name must start with '/'")
+    
+    try:
+        msg = node.one_shot_subscribe(topic, timeout)
+    except TimeoutError as e:
+        raise HTTPException(status_code=504, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Internal Error: {str(e)}")
+
+    msg_dict = message_to_ordereddict(msg)
+    return {"topic": topic, "data": msg_dict}
+
+
+@app.get("/list_topics")
+def list_topics():
+    topic_list = node.get_topic_names_and_types()
+    topics = [{"name": name, "types": types} for name, types in topic_list]
+    return {"topics": topics}
+
+
+def ros_spin():
+    rclpy.spin(node)
 
 
 def main(args=None):
+    global node
     rclpy.init(args=args)
+    node = OneShotDynamicSubscriber()
 
-    # Create the combined node
-    node = ROSFastAPI()
+    ros_thread = threading.Thread(target=ros_spin, daemon=True)
+    ros_thread.start()
 
-    # Start FastAPI in a separate thread
-    fastapi_thread = threading.Thread(target=run_fastapi, args=(node.app,), daemon=True)
-    fastapi_thread.start()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
-    try:
-        # Run ROS2 node
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        node.get_logger().info("Shutting down...")
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+    node.destroy_node()
+    rclpy.shutdown()
 
 
 if __name__ == "__main__":
