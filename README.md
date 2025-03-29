@@ -1,6 +1,6 @@
 # ROS2VLX - ROS2 Vision Language eXecutor
 
-ROS2VLX is a natural language interface for ROS2, enabling users to interact with ROS2 using voice or text commands. It leverages LangChain, NVIDIA AI endpoints, and OpenAI/Azure OpenAI to provide a seamless and intelligent experience.
+ROS2VLX is a natural language interface for ROS2, enabling users to interact with ROS2 using voice or text commands. It leverages LangChain, NVIDIA AI endpoints, and OpenAI/Azure OpenAI to provide a seamless and intelligent experience. Also working on a ROS2 Web Interface for n8n integration. 
 
 > **⚠️ This project is currently under heavy development. Expect frequent updates and changes.**
 
