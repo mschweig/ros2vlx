@@ -1,12 +1,18 @@
 import rclpy
 from rclpy.node import Node
 import threading
-import asyncio
-from fastapi import FastAPI, HTTPException, Query
-import uvicorn
 import traceback
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import Response
+import uvicorn
+
 from rosidl_runtime_py.utilities import get_message
 from rosidl_runtime_py.convert import message_to_ordereddict
+
+import base64
+import cv2
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image as ROSImage
 
 app = FastAPI()
 
@@ -23,24 +29,25 @@ class OneShotDynamicSubscriber(Node):
         for name, types in topic_list:
             if name == topic_name:
                 if not types:
-                    raise ValueError(f"Topic '{topic_name}' has no types.")
+                    raise ValueError(f"Topic '{topic_name}' has no available types.")
                 return types[0]  # Use the first type
         raise ValueError(f"Topic '{topic_name}' not found.")
 
     def import_message_class(self, type_str: str):
-        module_name, _, msg_name = type_str.split('/')
-        return get_message(f"{module_name}/msg/{msg_name}")
+        try:
+            module_name, _, msg_name = type_str.split('/')
+            return get_message(f"{module_name}/msg/{msg_name}")
+        except Exception:
+            raise ValueError(f"Cannot resolve message type: {type_str}")
 
     def one_shot_subscribe(self, topic_name: str, timeout: float = 5.0):
         with self.lock:
             self.latest_msg = None
             self.subscription_event.clear()
 
-            # Detect type
+            # Detect and load message type
             topic_type = self.get_topic_type(topic_name)
             self.get_logger().info(f"Detected topic type: {topic_type}")
-
-            # Load message type
             msg_class = self.import_message_class(topic_type)
 
             # Subscribe
@@ -67,14 +74,18 @@ class OneShotDynamicSubscriber(Node):
             self.subscription_event.set()
 
 
+# Global node reference
 node: OneShotDynamicSubscriber = None
 
+
 @app.get("/get_data")
-def get_data(topic: str = Query(..., description="Topic to subscribe to"),
-             timeout: float = Query(5.0, description="Timeout in seconds (default=5)")):
+def get_data(
+    topic: str = Query(..., description="ROS 2 topic to subscribe to"),
+    timeout: float = Query(5.0, description="Timeout in seconds"),
+):
     if not topic.startswith("/"):
         raise HTTPException(status_code=400, detail="Topic name must start with '/'")
-    
+
     try:
         msg = node.one_shot_subscribe(topic, timeout)
     except TimeoutError as e:
@@ -85,15 +96,40 @@ def get_data(topic: str = Query(..., description="Topic to subscribe to"),
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Internal Error: {str(e)}")
 
-    msg_dict = message_to_ordereddict(msg)
-    return {"topic": topic, "data": msg_dict}
+    # Handle sensor_msgs/Image
+    if isinstance(msg, ROSImage):
+        try:
+            bridge = CvBridge()
+            cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+            success, buffer = cv2.imencode(".png", cv_image)
+            if not success:
+                raise RuntimeError("Failed to encode image")
+
+            return Response(content=buffer.tobytes(), media_type="image/png")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Image conversion error: {str(e)}")
+
+    # Handle all other message types
+    try:
+        msg_dict = message_to_ordereddict(msg)
+        return {
+            "topic": topic,
+            "type": "message",
+            "message_type": msg.__class__.__name__,
+            "data": msg_dict
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Message conversion error: {str(e)}")
 
 
 @app.get("/list_topics")
 def list_topics():
-    topic_list = node.get_topic_names_and_types()
-    topics = [{"name": name, "types": types} for name, types in topic_list]
-    return {"topics": topics}
+    try:
+        topic_list = node.get_topic_names_and_types()
+        topics = [{"name": name, "types": types} for name, types in topic_list]
+        return {"topics": topics}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 def ros_spin():
